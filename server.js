@@ -190,20 +190,6 @@ serv_io.sockets.on('connection', function(socket) {
 	});
 
 	socket.on('disconnect', function() {
-		for (var i in rooms) {
-			if (rooms[i].owner == ThisUser) {
-				if (rooms[i].num > 0) {
-					for (var u in rooms[i].participant) {
-						rooms[i].owner = rooms[i].participant[u];
-						console.log('The owner of room ' + i + ' is changed to ' + rooms[i].owner.username);
-						break;
-					}
-				} else {
-					delete rooms[i];
-					console.log('Room ' + i + ' is deleted.');
-				}
-			}
-		}
 		if (status == '@lobby') {
 			console.log(ThisUser.username + ' disconnected.')
 			lobby.removeUser(ThisUser);
@@ -218,5 +204,20 @@ serv_io.sockets.on('connection', function(socket) {
 			sockets.broadcast('updateRoomInfo', { 'rooms': rooms });
 			names.splice(names.indexOf(ThisUser.username), 1);
 		}
+        
+        for (var i in rooms) {
+            if (rooms[i].owner == ThisUser) {
+                if (rooms[i].num > 0) {
+                    for (var u in rooms[i].participant) {
+                        rooms[i].owner = rooms[i].participant[u];
+                        console.log('The owner of room ' + i + ' is changed to ' + rooms[i].owner.username);
+                        break;
+                    }
+                } else {
+                    delete rooms[i];
+                    console.log('Room ' + i + ' is deleted.');
+                }
+            }
+        }
 	});
 });
