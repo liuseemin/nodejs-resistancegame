@@ -11,7 +11,7 @@ $view.mousemove( function(evt) {
 });
 
 socket.on('update', function(data) {
-	var context = document.getElementsById('gameCanvas').getContext('2d');
+	var context = $view[0].getContext('2d');
 	var roomMouse = data.update.roomMouse;
 	var color = data.update.color;
 
