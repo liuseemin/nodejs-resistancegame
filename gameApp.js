@@ -1,4 +1,5 @@
-$('.room.gamepanel').append("<canvas id='gameCanvas' style='height:100%;width:100%'></canvas>");
+
+$('.room.gamepanel').append("<canvas id='gameCanvas' height='" + $('.room.gamepanel').height() + "' width='" + $('.room.gamepanel').width() + "'></canvas>");
 
 $view = $('#gameCanvas');
 
