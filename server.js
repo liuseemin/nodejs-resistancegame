@@ -12,6 +12,8 @@ var server = http.createServer(function(request, response) {
 			response.write('Hello, World.');
 			response.end();
 			break;
+		case '/gameHandler.js':
+		case '/gameApp.js':
 		case '/socket.js':
 		case '/socket.html':
 		case '/style.css':
@@ -118,7 +120,7 @@ serv_io.sockets.on('connection', function(socket) {
 	var ThisUser;
 	var status = '@login';
 	var RoomNow;
-	var gameHandler;
+	var gameHandler = require('./gameHandler');
 
 	socket.on('login', function(data) {
 		console.log('User login: ' + data.username);
