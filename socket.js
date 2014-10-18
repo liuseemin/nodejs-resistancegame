@@ -16,7 +16,7 @@ function hashCodeGenerator(Hashpool) {
 	return code;
 }
 
-var socket = io.connect();
+var socket = io.connect('ws://nodejs-hsimingliu.rhcloud.com:8000');
 var User;
 var sound = true;
 
