@@ -35,12 +35,17 @@ html, body {
 	width: 100%;
 }
 
-.room.chatarea {
+.room.chat {
 	height: 100%;
 	width: 30%;
 	position: absolute;
 	top: 0;
 	left: 0;
+}
+
+.room.chatarea {
+	height: 100%;
+	width: 100%;
 }
 
 .room.gamepanel {
