@@ -37,6 +37,7 @@ function game_init() {
 			context.lineWidth = 1;
 			context.stroke();
 			context.font = "12px Georgia";
+			context.fillStyle = 'BLACK';
 			context.fillText(m, roomMouse[m].x + 10, roomMouse[m].y - 10);
 			context.closePath();
 		}
