@@ -1,167 +1,222 @@
-#!/bin/env node
-//  OpenShift sample Node application
-var express = require('express');
-var fs      = require('fs');
+var http = require("http");
+var url = require('url');
+var fs = require('fs');
+var io = require('socket.io'); // 加入 Socket.IO
 
+var server = http.createServer(function(request, response) {
+	var path = url.parse(request.url).pathname;
 
-/**
- *  Define the sample application.
- */
-var SampleApp = function() {
+	switch (path) {
+		case '/':
+			response.writeHead(200, {'Content-Type': 'text/html'});
+			response.write('Hello, World.');
+			response.end();
+			break;
+		case '/socket.js':
+		case '/socket.html':
+		case '/style.css':
+		case '/notice.wav':
+		case '/test.html':
+			fs.readFile(__dirname + path, function(error, data) {
+				if (error){
+					response.writeHead(404);
+					response.write("opps this doesn't exist - 404");
+				} else {
+					response.writeHead(200, {"Content-Type": "text/html"});
+					response.write(data, "utf8");
+				}
+				response.end();
+			});
+			break;
+		default:
+			response.writeHead(404);
+			response.write("opps this doesn't exist - 404");
+			response.end();
+			break;
+	}
+});
 
-    //  Scope.
-    var self = this;
+var server_port = process.env.OPENSHIFT_NODEJS_PORT || 8080;
+var server_ip_address = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1';
 
+server.listen(server_port, server_ip_address);
 
-    /*  ================================================================  */
-    /*  Helper functions.                                                 */
-    /*  ================================================================  */
+var serv_io = io.listen(server);
+console.log('server listening...')
 
-    /**
-     *  Set up server IP address and port # using env variables/defaults.
-     */
-    self.setupVariables = function() {
-        //  Set the environment variables we need.
-        self.ipaddress = process.env.OPENSHIFT_NODEJS_IP;
-        self.port      = process.env.OPENSHIFT_NODEJS_PORT || 8080;
+function randomColor() {
+	var rand = Math.ceil(Math.random() * 10 % 6);
+	var color;
+	switch(rand) {
+		case 1: color = {'name':'PapayaWhip'	, 'code':'#FFEFD5'};  break;
+		case 2: color = {'name':'Honeydew'		, 'code':'#F0FFF0'};  break; 
+		case 3: color = {'name':'Azure'			, 'code':'#F0FFFF'};  break; 
+		case 4: color = {'name':'LightYellow'	, 'code':'#FFFFE0'};  break;
+		case 5: color = {'name':'lavender'		, 'code':'#E6E6FA'};  break;
+		case 6: color = {'name':'LavenderBlush'	, 'code':'#FFF0F5'};  break;
+	}
+	return color;
+}
 
-        if (typeof self.ipaddress === "undefined") {
-            //  Log errors on OpenShift but continue w/ 127.0.0.1 - this
-            //  allows us to run/test the app locally.
-            console.warn('No OPENSHIFT_NODEJS_IP var, using 127.0.0.1');
-            self.ipaddress = "127.0.0.1";
-        };
-    };
+function reUnite(str) {
+	var result = '';
+	for (var i in str) {
+		result = result + str[i];
+	}
+	return result;
+}
 
+function user(username) {
+	this.username = username;
+	this.color = randomColor();
+}
 
-    /**
-     *  Populate the cache.
-     */
-    self.populateCache = function() {
-        if (typeof self.zcache === "undefined") {
-            self.zcache = { 'index.html': '' };
-        }
+function room(id, owner) {
+	this.id = id;
+	this.participant = {};
+	this.num = 0;
+	this.owner = owner;
+}	
+room.prototype = {
+	addUser: function(user) {
+		this.participant[user.username] = user;
+		this.num++;
+	},
 
-        //  Local cache for static content.
-        self.zcache['index.html'] = fs.readFileSync('./index.html');
-    };
+	removeUser: function(user) {
+		delete this.participant[user.username];
+		this.num--;
+	},
 
+	broadcast: function(sockets, event, data) {
+		for (var i in this.participant) {
+			var s = this.participant[i].username;
+			sockets.registered[s].emit(event, data);
+		}
+	}
+}
 
-    /**
-     *  Retrieve entry (content) from cache.
-     *  @param {string} key  Key identifying content to retrieve from cache.
-     */
-    self.cache_get = function(key) { return self.zcache[key]; };
+//var watchers = { 'num': 0 };
 
+var lobby = new room('$root', '$root');
 
-    /**
-     *  terminator === the termination handler
-     *  Terminate server on receipt of the specified signal.
-     *  @param {string} sig  Signal to terminate on.
-     */
-    self.terminator = function(sig){
-        if (typeof sig === "string") {
-           console.log('%s: Received %s - terminating sample app ...',
-                       Date(Date.now()), sig);
-           process.exit(1);
-        }
-        console.log('%s: Node server stopped.', Date(Date.now()) );
-    };
+var names = [];
 
+var rooms = {};
 
-    /**
-     *  Setup termination handlers (for exit and a list of signals).
-     */
-    self.setupTerminationHandlers = function(){
-        //  Process on exit and signals.
-        process.on('exit', function() { self.terminator(); });
+var sockets = {
+	registered: {},
+	broadcast: function(event, data) {
+		for (var s in this.registered) {
+			this.registered[s].emit(event, data);
+		}
+	}
+};
 
-        // Removed 'SIGPIPE' from the list - bugz 852598.
-        ['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT',
-         'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'
-        ].forEach(function(element, index, array) {
-            process.on(element, function() { self.terminator(element); });
-        });
-    };
+serv_io.sockets.on('connection', function(socket) {
 
+	var ThisUser;
+	var status = '@login';
+	var RoomNow;
 
-    /*  ================================================================  */
-    /*  App server functions (main app logic here).                       */
-    /*  ================================================================  */
+	socket.on('login', function(data) {
+		console.log('User login: ' + data.username);
+		if (names.indexOf(data.username) != -1)
+			socket.emit('userinfo', {});
+		else {
+			names.push(data.username);
+			ThisUser = new user(data.username);
+			lobby.addUser(ThisUser);
+			sockets.registered[data.username] = socket;
+			socket.emit('userinfo', { 'userinfo':ThisUser });
+			sockets.broadcast('updateRoomInfo', { 'rooms': rooms });
+			sockets.broadcast('updateLobbyInfo', { 'lobby': lobby });
+			status = '@lobby';
+		}
+	});
 
-    /**
-     *  Create the routing table entries + handlers for the application.
-     */
-    self.createRoutes = function() {
-        self.routes = { };
+	socket.on('create room', function(data) {
+		console.log('A new room was created: ' + data.roomID);
+		var NewRoom = new room(data.roomID, ThisUser);
+		rooms[data.roomID] = NewRoom;
+		sockets.broadcast('updateRoomInfo', { 'rooms': rooms });
+	});
 
-        self.routes['/asciimo'] = function(req, res) {
-            var link = "http://i.imgur.com/kmbjB.png";
-            res.send("<html><body><img src='" + link + "'></body></html>");
-        };
+	socket.on('joinRoom', function(data) {
+		lobby.removeUser(ThisUser);
+		RoomNow = rooms[data.roomToJoin];
+		RoomNow.addUser(ThisUser);
+		RoomNow.broadcast(sockets, 'updateRoom', {'RoomNow':RoomNow});
+		sockets.broadcast('updateRoomInfo', { 'rooms': rooms });
+		sockets.broadcast('updateLobbyInfo', { 'lobby': lobby });
+		status = '@room';
+	});
 
-        self.routes['/'] = function(req, res) {
-            res.setHeader('Content-Type', 'text/html');
-            res.send(self.cache_get('index.html') );
-        };
-    };
+	socket.on('deleteRoom', function(data) {
+		var DeletedRoom = rooms[data.roomToDel];
+		DeletedRoom.broadcast(sockets, 'kickout', {'owner': ThisUser});
+		delete rooms[data.roomToDel];
+		console.log('Room ' + data.roomToDel + ' is deleted.');
+		sockets.broadcast('updateRoomInfo', { 'rooms': rooms });
+	});
 
+	socket.on('leaveRoom', function(data) {
+		RoomNow.removeUser(ThisUser);
+		lobby.addUser(ThisUser);
+		RoomNow.broadcast(sockets, 'updateRoom', {'RoomNow':RoomNow});
+		RoomNow = null;
+		sockets.broadcast('updateRoomInfo', { 'rooms': rooms });
+		sockets.broadcast('updateLobbyInfo', { 'lobby': lobby });
+		status = '@lobby';
+	});
 
-    /**
-     *  Initialize the server (express) and create the routes and register
-     *  the handlers.
-     */
-    self.initializeServer = function() {
-        self.createRoutes();
-        self.app = express.createServer();
+	socket.on('message', function(data) {
+		console.log('Recieve message from ' + ThisUser.username + ": " + data.message);
+		console.log(ThisUser.username + " status:" + status);
+		var msg = reUnite(data.message.split('<script>'));
+		if (status == '@lobby' || RoomNow == null) {
+			sockets.broadcast('message', {
+				'message':  ThisUser.username+ ": " + msg,
+				'target': '.lobby.chatarea',
+				'color': ThisUser.color.code
+			});
+		} else if (status == '@room') {
+			RoomNow.broadcast(sockets, 'message', {
+				'message':  ThisUser.username+ ": " + msg,
+				'target': '.room.chatarea',
+				'color': ThisUser.color.code
+			});
+		}
+	});
 
-        //  Add handlers for the app (from the routes).
-        for (var r in self.routes) {
-            self.app.get(r, self.routes[r]);
-        }
-    };
-
-
-    /**
-     *  Initializes the sample application.
-     */
-    self.initialize = function() {
-        self.setupVariables();
-        self.populateCache();
-        self.setupTerminationHandlers();
-
-        // Create the express server and routes.
-        self.initializeServer();
-    };
-
-
-    /**
-     *  Start the server (starts up the sample application).
-     */
-    self.start = function() {
-        //  Start the app on the specific interface (and port).
-        self.app.listen(self.port, self.ipaddress, function() {
-            console.log('%s: Node server started on %s:%d ...',
-                        Date(Date.now() ), self.ipaddress, self.port);
-        });
-    };
-
-};   /*  Sample Application.  */
-
-
-
-/**
- *  main():  Main code.
- */
-var zapp = new SampleApp();
-zapp.initialize();
-zapp.start();
-
-var io = require('socket.io')(zapp.app);
-
-io.on('connection', function (socket) {
-  socket.emit('news', { hello: 'world' });
-  socket.on('my other event', function (data) {
-    console.log(data);
-  });
+	socket.on('disconnect', function() {
+		for (var i in rooms) {
+			if (rooms[i].owner == ThisUser) {
+				if (rooms[i].num > 0) {
+					for (var u in rooms[i].participant) {
+						rooms[i].owner = rooms[i].participant[u];
+						console.log('The owner of room ' + i + ' is changed to ' + rooms[i].owner.username);
+						break;
+					}
+				} else {
+					delete rooms[i];
+					console.log('Room ' + i + ' is deleted.');
+				}
+			}
+		}
+		if (status == '@lobby') {
+			console.log(ThisUser.username + ' disconnected.')
+			lobby.removeUser(ThisUser);
+			delete sockets.registered[ThisUser.username];
+			sockets.broadcast('updateLobbyInfo', { 'lobby': lobby });
+			sockets.broadcast('updateRoomInfo', { 'rooms': rooms });
+			names.splice(names.indexOf(ThisUser.username), 1);
+		} else if (status == '@room') {
+			RoomNow.removeUser(ThisUser);
+			RoomNow.broadcast(sockets, 'updateRoom', {'RoomNow':RoomNow});
+			delete sockets.registered[ThisUser.username];
+			sockets.broadcast('updateRoomInfo', { 'rooms': rooms });
+			names.splice(names.indexOf(ThisUser.username), 1);
+		}
+	});
 });
