@@ -9,8 +9,14 @@ function deal(room, user, data) {
 		'roomMouse': roomMouse,
 		'color': color
 	}
-	
+
 	return update;
 }
 
+function cleanUp(user) {
+	delete roomMouse[user.username];
+	delete [user.username];
+}
+
 exports.deal = deal;
+exports.cleanUp = cleanUp;

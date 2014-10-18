@@ -164,6 +164,7 @@ serv_io.sockets.on('connection', function(socket) {
 	});
 
 	socket.on('leaveRoom', function(data) {
+		gameHandler.cleanUp(ThisUser);
 		RoomNow.removeUser(ThisUser);
 		lobby.addUser(ThisUser);
 		RoomNow.broadcast('updateRoom', {'RoomNow':RoomNow});
@@ -212,6 +213,7 @@ serv_io.sockets.on('connection', function(socket) {
 			sockets.broadcast('updateRoomInfo', { 'rooms': rooms });
 			names.splice(names.indexOf(ThisUser.username), 1);
 		} else if (status == '@room') {
+			gameHandler.cleanUp(ThisUser);
 			RoomNow.removeUser(ThisUser);
 			RoomNow.broadcast('updateRoom', {'RoomNow':RoomNow});
 			delete sockets.registered[ThisUser.username];
