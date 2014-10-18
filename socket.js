@@ -112,6 +112,7 @@ socket.on('updateRoomInfo', function(data) {
 			$('.lobby.page').fadeOut();
 			$('.lobby.chatarea').empty();
 			$('.room.page').fadeIn();
+			game_init();
 			//$('.room.chat').height(($('body').height() - $('.room.chat').offset().top));
 		});
 	}
