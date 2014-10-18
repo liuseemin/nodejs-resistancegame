@@ -157,3 +157,11 @@ var zapp = new SampleApp();
 zapp.initialize();
 zapp.start();
 
+var io = require('socket.io')(zapp.app);
+
+io.on('connection', function (socket) {
+  socket.emit('news', { hello: 'world' });
+  socket.on('my other event', function (data) {
+    console.log(data);
+  });
+});

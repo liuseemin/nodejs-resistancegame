@@ -203,6 +203,15 @@ line-height: 1.4;
 
 </style>
 
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  var socket = io.connect();
+  socket.on('news', function (data) {
+    console.log(data);
+    socket.emit('my other event', { my: 'data' });
+  });
+</script>
+
 </head>
 <body>
 <section class='container'>
