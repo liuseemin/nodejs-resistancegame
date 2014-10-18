@@ -28,3 +28,25 @@ html, body {
 	width: 30%;
 	overflow: auto;
 }
+
+.room.innerframe {
+	position: relative;
+	height: 80%;
+	width: 100%;
+}
+
+.room.chatarea {
+	height: 100%;
+	width: 30%;
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+.room.gamepanel {
+	height: 100%;
+	width: 70%;
+	position: absolute;
+	top: 0;
+	right: 0;
+}

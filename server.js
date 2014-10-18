@@ -88,7 +88,7 @@ room.prototype = {
 		this.num--;
 	},
 
-	broadcast: function(sockets, event, data) {
+	broadcast: function(event, data) {
 		for (var i in this.participant) {
 			var s = this.participant[i].username;
 			sockets.registered[s].emit(event, data);
@@ -118,6 +118,7 @@ serv_io.sockets.on('connection', function(socket) {
 	var ThisUser;
 	var status = '@login';
 	var RoomNow;
+	var gameHandler;
 
 	socket.on('login', function(data) {
 		console.log('User login: ' + data.username);
@@ -146,7 +147,7 @@ serv_io.sockets.on('connection', function(socket) {
 		lobby.removeUser(ThisUser);
 		RoomNow = rooms[data.roomToJoin];
 		RoomNow.addUser(ThisUser);
-		RoomNow.broadcast(sockets, 'updateRoom', {'RoomNow':RoomNow});
+		RoomNow.broadcast('updateRoom', {'RoomNow':RoomNow});
 		sockets.broadcast('updateRoomInfo', { 'rooms': rooms });
 		sockets.broadcast('updateLobbyInfo', { 'lobby': lobby });
 		status = '@room';
@@ -154,7 +155,7 @@ serv_io.sockets.on('connection', function(socket) {
 
 	socket.on('deleteRoom', function(data) {
 		var DeletedRoom = rooms[data.roomToDel];
-		DeletedRoom.broadcast(sockets, 'kickout', {'owner': ThisUser});
+		DeletedRoom.broadcast('kickout', {'owner': ThisUser});
 		delete rooms[data.roomToDel];
 		console.log('Room ' + data.roomToDel + ' is deleted.');
 		sockets.broadcast('updateRoomInfo', { 'rooms': rooms });
@@ -163,7 +164,7 @@ serv_io.sockets.on('connection', function(socket) {
 	socket.on('leaveRoom', function(data) {
 		RoomNow.removeUser(ThisUser);
 		lobby.addUser(ThisUser);
-		RoomNow.broadcast(sockets, 'updateRoom', {'RoomNow':RoomNow});
+		RoomNow.broadcast('updateRoom', {'RoomNow':RoomNow});
 		RoomNow = null;
 		sockets.broadcast('updateRoomInfo', { 'rooms': rooms });
 		sockets.broadcast('updateLobbyInfo', { 'lobby': lobby });
@@ -181,11 +182,22 @@ serv_io.sockets.on('connection', function(socket) {
 				'color': ThisUser.color.code
 			});
 		} else if (status == '@room') {
-			RoomNow.broadcast(sockets, 'message', {
+			RoomNow.broadcast('message', {
 				'message':  ThisUser.username+ ": " + msg,
 				'target': '.room.chatarea',
 				'color': ThisUser.color.code
 			});
+		}
+	});
+
+	socket.on('command', function(data) {
+		if (status == '@room') {
+			var update;
+			if (gameHandler)
+				update = gameHandler.deal(RoomNow, ThisUser, data);
+			else
+				update = data;
+			RoomNow.broadcast('update', {'update': update});
 		}
 	});
 
@@ -199,7 +211,7 @@ serv_io.sockets.on('connection', function(socket) {
 			names.splice(names.indexOf(ThisUser.username), 1);
 		} else if (status == '@room') {
 			RoomNow.removeUser(ThisUser);
-			RoomNow.broadcast(sockets, 'updateRoom', {'RoomNow':RoomNow});
+			RoomNow.broadcast('updateRoom', {'RoomNow':RoomNow});
 			delete sockets.registered[ThisUser.username];
 			sockets.broadcast('updateRoomInfo', { 'rooms': rooms });
 			names.splice(names.indexOf(ThisUser.username), 1);
