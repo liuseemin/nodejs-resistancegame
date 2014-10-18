@@ -50,7 +50,7 @@ function game_init() {
 		context.lineWidth = 1;
 		context.stroke();
 		context.font = "12px Georgia";
-		context.fillText(m, mouse.x + 10, mouse.y - 10);
+		context.fillText(User.username, mouse.x + 10, mouse.y - 10);
 		context.closePath();
 	}
 }
