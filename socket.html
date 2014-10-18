@@ -1,0 +1,37 @@
+<html>
+<head>
+	<link rel="stylesheet" href="style.css">
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+	<script src="/socket.js"></script>
+</head>
+<body>
+	<div class='pages'>
+		<div class='login page'>
+			username: <input id='username'><button id='login'>Login</button>
+			<div id='sameName' style='display: none; color: red'>This name has been used! Please login with other name.</div>
+		</div>
+		<div class='lobby page'>
+			<div id='userinfo'></div>
+			<div id='lobbyInfo'></div>
+			<div id='newRoom'>
+				<button id='createRoom'>Create Room</button>
+			</div>
+			<div id='roomInfo'></div>
+			<div class='lobby chat'>
+				<input class='lobby chatinput'><button class='lobby chatsend'>Send</button><button class='sound'>Sound: ON</button>
+				<div class='lobby chatarea'></div>
+			</div>
+		</div>
+		<div class='room page'>
+			<div id='roomUsers'></div>
+			<div class='room chat'>
+				<input class='room chatinput'><button class='room chatsend'>Send</button><button class='sound'>Sound: ON</button>
+				<div class='room chatarea'></div>
+			</div>
+		</div>
+	</div>
+	<audio id='notice' src='/notice.wav'>
+</body>
+</html>

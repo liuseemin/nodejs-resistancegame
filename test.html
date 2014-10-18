@@ -1,0 +1,95 @@
+<html>
+<head>
+	<title>test</title>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script>
+
+	function randomColor() {
+		var rand = Math.ceil(Math.random() * 12 % 6);
+		var color;
+		switch(rand) {
+			case 1: color = {'name':'PapayaWhip'	, 'code':'#FFEFD5'};  break;
+			case 2: color = {'name':'Honeydew'		, 'code':'#F0FFF0'};  break; 
+			case 3: color = {'name':'Azure'			, 'code':'#F0FFFF'};  break; 
+			case 4: color = {'name':'LightYellow'	, 'code':'#FFFFE0'};  break;
+			case 5: color = {'name':'lavender'		, 'code':'#E6E6FA'};  break;
+			case 6: color = {'name':'LavenderBlush'	, 'code':'#FFF0F5'};  break;
+		}
+		return color;
+	}
+
+	var colorpool = {
+		'PapayaWhip':'#FFEFD5',
+		'Honeydew':'#F0FFF0',
+		'Azure':'#F0FFFF',
+		'LightYellow':'#FFFFE0',
+		'lavender':'#E6E6FA',
+		'LavenderBlush':'#FFF0F5'
+	};
+
+	var hashpool = [];
+
+	function hashCodeGenerator(Hashpool) {
+		var code = '';
+		while(code.length < 8) {
+			for (var i = 0; i < 8; i++) {
+				var rand = Math.ceil(Math.random() * 72 % 36) + 47;
+				var charcode;
+				if (rand <= 57)
+					charcode = String.fromCharCode(rand);
+				else
+					charcode = String.fromCharCode(rand + 7);
+				code = code + charcode;
+			}
+			if (Hashpool.indexOf(code) != -1) code = '';
+		}
+		Hashpool.push(code);
+		return code;
+	}
+
+	$(document).ready(function() {
+		$('#test').click(function() {
+			console.log($(this).val());
+			$('#notice')[0].load();
+			$('#notice')[0].play();
+		});
+		/*
+		var timer = setInterval(function() {
+			var color = randomColor();
+			$('#color').append("<div style='background-color: " + color.code + "'>" + hashCodeGenerator(hashpool) + "</div>");
+		}, 1000);
+*/		
+		var i = 0;
+		var p = {
+			'PapayaWhip'	: 0,
+			'Honeydew'		: 0,
+			'Azure'			: 0,
+			'LightYellow'	: 0,
+			'lavender'		: 0,
+			'LavenderBlush'	: 0
+		};
+		var timer = setInterval(function() {
+			if(i < 10000000) {
+				var color = randomColor();
+				p[color.name]++;
+
+				$('#color').empty();
+				for (var c in p) {
+					$('#color').append("<div style=' background-color: " + colorpool[c] + "'>" + c + ": " + p[c] + ", possibility: " + Math.round(p[c]/i * 100) + "%</div>");
+				}
+				i++;
+			}
+		}, 10);
+	});
+
+	
+	
+	</script>
+</head>
+<body>
+<button id='test' value='test1234'>test</button>
+<div id='color'></div>
+<audio id='notice' src='/notice.wav'>
+</body>
+</html>
+
