@@ -12,6 +12,7 @@ function game_init() {
 	});
 
 	socket.on('update', function(data) {
+		$view[0].width = $view[0].width;
 		var context = $view[0].getContext('2d');
 		var roomMouse = data.update.roomMouse;
 		var color = data.update.color;
