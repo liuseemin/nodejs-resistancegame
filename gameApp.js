@@ -32,7 +32,7 @@ function game_init() {
 			//if (m == User.username) continue;
 			context.beginPath();
 			context.arc(roomMouse[m].x, roomMouse[m].y, 10, 0, Math.PI * 2);
-			context.fillStyle = color[m];
+			context.fillStyle = color[m].code;
 			context.fill();
 			context.lineWidth = 1;
 			context.stroke();
@@ -41,17 +41,9 @@ function game_init() {
 			context.closePath();
 		}
 	}
+}
 
-	function drawself(context, mouse, color) {
-		$view[0].width = $view[0].width;
-		context.beginPath();
-		context.arc(mouse.x, mouse.y, 10, 0, Math.PI * 2);
-		context.fillStyle = color;
-		context.fill();
-		context.lineWidth = 1;
-		context.stroke();
-		context.font = "12px Georgia";
-		context.fillText(User.username, mouse.x + 10, mouse.y - 10);
-		context.closePath();
-	}
+function game_close() {
+	var $view = $('#gameCanvas');
+	$view.remove();
 }

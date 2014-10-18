@@ -144,6 +144,7 @@ socket.on('updateRoom', function(data) {
 	$('#roomUsers').append(leavebtn);
 	$('.leaveRoom').click(function() {
 		socket.emit('leaveRoom', {'roomToLeave': $(this).val()});
+		game_close();
 		$('.room.page').fadeOut();
 		$('.room.chatarea').empty();
 		$('.lobby.page').fadeIn();
