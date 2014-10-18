@@ -9,15 +9,12 @@ function game_init() {
 			'x': evt.pageX - $view.offset().left,
 			'y': evt.pageY - $view.offset().top
 		};
-		//drawself(context, mouse, User.color);
 		socket.emit('command', {'mouse':mouse});
 	});
 
 	socket.on('update', function(data) {
 		var roomMouse = data.update.roomMouse;
 		var color = data.update.color;
-
-		console.log(roomMouse);
 
 		(function update() {
 			requestAnimationFrame(update);
