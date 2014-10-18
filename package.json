@@ -1,7 +1,7 @@
 {
-  "name": "MyApp",
+  "name": "OpenShift-Sample-App",
   "version": "1.0.0",
-  "description": "App for test",
+  "description": "OpenShift Sample Application",
   "keywords": [
     "OpenShift",
     "Node.js",
@@ -9,9 +9,14 @@
     "openshift"
   ],
   "author": {
-    "name": "HsimingLiu",
-    "email": "liuseemin@gmail.com",
+    "name": "OpenShift",
+    "email": "ramr@example.org",
     "url": "http://www.openshift.com/"
+  },
+  "homepage": "http://www.openshift.com/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openshift/origin-server"
   },
 
   "engines": {
@@ -20,14 +25,11 @@
   },
 
   "dependencies": {
-    "socket.io": "~1.1.0"
+    "express": "~3.4.4"
   },
   "devDependencies": {},
   "bundleDependencies": [],
 
   "private": true,
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
+  "main": "server.js"
 }
