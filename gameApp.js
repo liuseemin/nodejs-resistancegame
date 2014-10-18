@@ -9,13 +9,11 @@ function game_init() {
 			'x': evt.pageX - $view.offset().left,
 			'y': evt.pageY - $view.offset().top
 		};
-		$view[0].width = $view[0].width;
 		drawself(context, mouse, User.color);
 		socket.emit('command', {'mouse':mouse});
 	});
 
 	socket.on('update', function(data) {
-		$view[0].width = $view[0].width;
 		var roomMouse = data.update.roomMouse;
 		var color = data.update.color;
 
@@ -29,7 +27,9 @@ function game_init() {
 	});
 
 	function render(context, roomMouse, color) {
+		$view[0].width = $view[0].width;
 		for(var m in roomMouse) {
+			if (m == User.username) continue;
 			context.beginPath();
 			context.arc(roomMouse[m].x, roomMouse[m].y, 10, 0, Math.PI * 2);
 			context.fillStyle = color[m];
@@ -43,6 +43,7 @@ function game_init() {
 	}
 
 	function drawself(context, mouse, color) {
+		$view[0].width = $view[0].width;
 		context.beginPath();
 		context.arc(mouse.x, mouse.y, 10, 0, Math.PI * 2);
 		context.fillStyle = color;
