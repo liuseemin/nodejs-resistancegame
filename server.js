@@ -12,6 +12,7 @@ var server = http.createServer(function(request, response) {
 			response.write('Hello, World.');
 			response.end();
 			break;
+		case '/images/face.png':
 		case '/gameHandler.js':
 		case '/gameApp2.js':
 		case '/socket.js':
@@ -60,6 +61,24 @@ function randomColor() {
 	return color;
 }
 
+function hashCodeGenerator(Hashpool) {
+	var code = '';
+	while(code.length < 8) {
+		for (var i = 0; i < 8; i++) {
+			var rand = Math.ceil(Math.random() * 72 % 36) + 47;
+			var charcode;
+			if (rand <= 57)
+				charcode = String.fromCharCode(rand);
+			else
+				charcode = String.fromCharCode(rand + 7);
+			code = code + charcode;
+		}
+		if (Hashpool.indexOf(code) != -1) code = '';
+	}
+	Hashpool.push(code);
+	return code;
+}
+
 function reUnite(str) {
 	var result = '';
 	for (var i in str) {
@@ -73,11 +92,12 @@ function user(username) {
 	this.color = randomColor();
 }
 
-function room(id, owner) {
+function room(id, owner, name) {
 	this.id = id;
 	this.participant = {};
 	this.num = 0;
 	this.owner = owner;
+	this.name = name;
 }	
 room.prototype = {
 	addUser: function(user) {
@@ -103,8 +123,10 @@ room.prototype = {
 var lobby = new room('$root', '$root');
 
 var names = [];
+var roomIdHash = [];
 
 var rooms = {};
+
 
 var sockets = {
 	registered: {},
@@ -139,9 +161,10 @@ serv_io.sockets.on('connection', function(socket) {
 	});
 
 	socket.on('create room', function(data) {
-		console.log('A new room was created: ' + data.roomID);
-		var NewRoom = new room(data.roomID, ThisUser);
-		rooms[data.roomID] = NewRoom;
+		var roomID = hashCodeGenerator(roomIdHash);
+		console.log('A new room was created: ' + roomID + " named " + data.roomName);
+		var NewRoom = new room(roomID, ThisUser, data.roomName);
+		rooms[roomID] = NewRoom;
 		sockets.broadcast('updateRoomInfo', { 'rooms': rooms });
 	});
 

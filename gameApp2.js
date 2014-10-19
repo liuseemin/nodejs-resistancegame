@@ -1,14 +1,14 @@
-function game_init(room) {
+function game_init() {
 	
 	var $view = $('.room.gamepanel');
-
+	//console.log($view.offset());
+	$view.css('cursor', 'none');
 
 	$view.mousemove( function(evt) {
 		var mouse = {
 			'x': evt.pageX - $view.offset().left,
 			'y': evt.pageY - $view.offset().top
 		};
-		console.log(mouse);
 		socket.emit('command', {'mouse':mouse});
 		moveMousePosDiv(User.username, mouse);
 	});
@@ -18,28 +18,42 @@ function game_init(room) {
 	});
 
 	socket.on('update', function(data) {
-		if (data.username != User.username)	moveMousePosDiv(data.username, data.mouse);
+		if (data.update.username != User.username) moveMousePosDiv(data.update.username, data.update.mouse);
 	});
 }
 
 function moveMousePosDiv(username, mouse) {
 	var div = $('#mouse' + username);
-	if (!div) {
+	//console.log(div);
+	if (div.length == 0) {
 		div = $('<div/>', {
 			'id': 'mouse' + username,
-			'width': 10,
-			'height': 10
+			'class': 'mousePos',
+			html: "<img src='/images/face.png'><br>" + username
 		})
-			.css('position', 'absolute')
-			.css('background-color', User.color.code)
-			.appendTo($view);
+			.css({
+				'position': 'absolute',
+				'background-color': 'rgba(255,255,255,0)',
+				'text-align': 'center'
+			})
+			.appendTo($('.room.gamepanel'));
 	}
-	div.offset({
-		'left': mouse.x,
-		'top': mouse.y
+	div.css({
+		left: mouse.x,
+		top: mouse.y
 	});
 }
 
 function game_close() {
-	$view.off('mousemove');
+	$('.room.gamepanel').off('mousemove');
+}
+
+function game_cleanUp(room) {
+	$('.mousePos').each(function(index) {
+		var del = true;
+		for (var i in room.participant) {
+			if ($(this).attr('id').substring(5) == i) del = false;
+		}
+		if (del) $(this).remove();
+	});
 }

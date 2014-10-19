@@ -16,9 +16,12 @@ function hashCodeGenerator(Hashpool) {
 	return code;
 }
 
-var socket = io.connect('ws://nodejs-hsimingliu.rhcloud.com:8000');
+//var socket = io.connect('ws://nodejs-hsimingliu.rhcloud.com:8000');
+var socket = io.connect(); //debug
 var User;
 var sound = true;
+
+var autoEnter = false;
 
 $(document).ready(function () {
 	$('#username').keydown(function(event) {
@@ -34,8 +37,13 @@ $(document).ready(function () {
 	});
 
 	$('#createRoom').click(function() {
-		var roomID = prompt('Enter room ID:');
-		if (roomID) socket.emit('create room', { 'roomID': roomID });
+		var roomName = prompt('Enter room name:');
+		if (roomName) {
+			socket.emit('create room', {
+				'roomName': roomName
+			});
+			autoEnter = true;
+		}
 	});
 
 	//lobby chat
@@ -93,8 +101,9 @@ socket.on('updateRoomInfo', function(data) {
 	$('#roomInfo').empty();
 	for (var i in data.rooms) {
 		var roomID = data.rooms[i].id;
+		var roomName = data.rooms[i].name;
 		var P_num = data.rooms[i].num;
-		var roomDiv = "<div class='room box' id='room" + roomID + "'>Room ID: " + roomID + ", participant number: " + P_num + " <button class='join' value='" + roomID + "'>Join</button></div>";
+		var roomDiv = "<div class='room box' id='room" + roomID + "'>[#" + roomID + "] Room " + roomName + ", participant number: " + P_num + " <button class='join' value='" + roomID + "'>Join</button></div>";
 		$('#roomInfo').append(roomDiv);
 		console.log(data.rooms[i].owner.username + ", " + User.username);
 		console.log(data.rooms[i].owner.username == User.username);
@@ -108,12 +117,20 @@ socket.on('updateRoomInfo', function(data) {
 		$('.join').off('click');
 		$('.join').click(function() {
 			socket.emit('joinRoom', {'roomToJoin': $(this).val()});
-			//console.log($(this).val());
 			$('.lobby.page').fadeOut();
 			$('.lobby.chatarea').empty();
 			$('.room.page').fadeIn();
-			//$('.room.chat').height(($('body').height() - $('.room.chat').offset().top));
+			game_init();
 		});
+		console.log(autoEnter);
+		if (autoEnter && data.rooms[i].owner.username == User.username) {
+			socket.emit('joinRoom', {'roomToJoin': i});
+			$('.lobby.page').fadeOut();
+			$('.lobby.chatarea').empty();
+			$('.room.page').fadeIn();
+			game_init();
+			autoEnter = false;
+		}
 	}
 });
 
@@ -132,7 +149,7 @@ socket.on('updateLobbyInfo', function(data) {
 socket.on('updateRoom', function(data) {
 	var p_num = data.RoomNow.num;
 	$('#roomUsers').empty();
-	$('#roomUsers').append("<div>== " + p_num + " user(s) in Room " + data.RoomNow.id + " now ==</div>");
+	$('#roomUsers').append("<div>== " + p_num + " user(s) in Room " + data.RoomNow.name + " now ==</div>");
 	for (var i in data.RoomNow.participant) {
 		var username = data.RoomNow.participant[i].username;
 		var color = data.RoomNow.participant[i].color.code;
@@ -143,12 +160,12 @@ socket.on('updateRoom', function(data) {
 	$('#roomUsers').append(leavebtn);
 	$('.leaveRoom').click(function() {
 		socket.emit('leaveRoom', {'roomToLeave': $(this).val()});
-		game_close();
 		$('.room.page').fadeOut();
 		$('.room.chatarea').empty();
 		$('.lobby.page').fadeIn();
+		game_close();
 	});
-	game_init(data.RoomNow);
+	game_cleanUp(data.RoomNow);
 });
 
 socket.on('kickout', function(data) {
