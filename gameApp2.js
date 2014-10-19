@@ -8,6 +8,7 @@ function game_init(room) {
 			'x': evt.pageX - $view.offset().left,
 			'y': evt.pageY - $view.offset().top
 		};
+		console.log(mouse);
 		socket.emit('command', {'mouse':mouse});
 		moveMousePosDiv(User.username, mouse);
 	});
