@@ -13,7 +13,7 @@ var server = http.createServer(function(request, response) {
 			response.end();
 			break;
 		case '/gameHandler.js':
-		case '/gameApp.js':
+		case '/gameApp2.js':
 		case '/socket.js':
 		case '/socket.html':
 		case '/style.css':
@@ -164,7 +164,6 @@ serv_io.sockets.on('connection', function(socket) {
 	});
 
 	socket.on('leaveRoom', function(data) {
-		gameHandler.cleanUp(ThisUser);
 		RoomNow.removeUser(ThisUser);
 		lobby.addUser(ThisUser);
 		RoomNow.broadcast('updateRoom', {'RoomNow':RoomNow});
@@ -213,7 +212,6 @@ serv_io.sockets.on('connection', function(socket) {
 			sockets.broadcast('updateRoomInfo', { 'rooms': rooms });
 			names.splice(names.indexOf(ThisUser.username), 1);
 		} else if (status == '@room') {
-			gameHandler.cleanUp(ThisUser);
 			RoomNow.removeUser(ThisUser);
 			RoomNow.broadcast('updateRoom', {'RoomNow':RoomNow});
 			delete sockets.registered[ThisUser.username];
